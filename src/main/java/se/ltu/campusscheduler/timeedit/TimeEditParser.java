@@ -19,6 +19,7 @@ public class TimeEditParser {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter DATE_TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     private final ObjectMapper objectMapper;
 
@@ -68,8 +69,8 @@ public class TimeEditParser {
                 LocalDateTime start = parseDateTime(textOrNull(r, "startdate"), textOrNull(r, "starttime"));
                 LocalDateTime end = parseDateTime(textOrNull(r, "enddate"), textOrNull(r, "endtime"));
 
-                ev.setStartIso(start != null ? start.toString() : "");
-                ev.setEndIso(end != null ? end.toString() : "");
+                ev.setStartIso(start != null ? start.format(DATE_FMT) + "\n" + start.format(TIME_FMT) : "");
+                ev.setEndIso(end != null ? end.format(DATE_FMT) + "\n" + end.format(TIME_FMT) : "");
 
                 // title
                 String title = (activity != null ? activity : "TimeEdit event");

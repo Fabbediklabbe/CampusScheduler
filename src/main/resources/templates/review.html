@@ -38,8 +38,8 @@
           <input type="hidden" th:field="*{events[__${stat.index}__].endIso}" />
 
           <td th:text="*{events[__${stat.index}__].title}">Title</td>
-          <td th:text="*{events[__${stat.index}__].startIso}">Start</td>
-          <td th:text="*{events[__${stat.index}__].endIso}">End</td>
+          <td style="white-space: pre-line;" th:text="*{events[__${stat.index}__].startIso}">Start</td>
+          <td style="white-space: pre-line;" th:text="*{events[__${stat.index}__].endIso}">End</td>
           <td>
             <input type="text" th:field="*{events[__${stat.index}__].location}" size="30" />
           </td>
