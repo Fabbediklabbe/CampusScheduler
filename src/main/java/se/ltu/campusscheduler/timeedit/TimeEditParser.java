@@ -10,8 +10,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class TimeEditParser {
@@ -29,6 +30,8 @@ public class TimeEditParser {
         try {
             JsonNode root = objectMapper.readTree(rawJson);
 
+            Map<String, Integer> headerIndex = buildHeaderIndex(root.path("columnheaders"));
+
             JsonNode reservations = root.path("reservations");
             List<ScheduleEventForm> result = new ArrayList<>();
             if (!reservations.isArray()) {
@@ -36,36 +39,56 @@ public class TimeEditParser {
             }
 
             for (JsonNode r : reservations) {
+                List<String> cols = extractColumnsAsList(r.path("columns"));
+
+                String activity = getCol(cols, headerIndex, "Aktivitet");
+                String place = getCol(cols, headerIndex, "Plats, Lokal");
+                String courseCode = getCol(cols, headerIndex, "Kurskod");
+                String courseName = getCol(cols, headerIndex, "Kursnamn");
+                String staffStudents = getCol(cols, headerIndex, "Anställd, Student");
+                String comment = getCol(cols, headerIndex, "Kommentar, Kommentar");
+                String meetingLink = getCol(cols, headerIndex, "Möteslänk");
+                String campus = getCol(cols, headerIndex, "Campus");
+
+                // Filtrera bort helgdagar/icke-kurs-händelser (som i din JSON)
+                boolean isProbablyHoliday = (courseCode == null || courseCode.isBlank())
+                        && (place == null || place.isBlank())
+                        && (activity != null && !activity.isBlank());
+                if (isProbablyHoliday) {
+                    continue;
+                }
+
                 ScheduleEventForm ev = new ScheduleEventForm();
 
-                // id kan heta olika, så vi tar några möjliga
-                String id = firstNonBlank(
-                        textOrNull(r, "id"),
-                        textOrNull(r, "reservationid"),
-                        textOrNull(r, "bookingid")
-                );
+                // id
+                String id = textOrNull(r, "id");
                 ev.setSourceId(id != null ? id : "");
 
-                LocalDateTime start = parseDateTime(
-                        textOrNull(r, "startdate"),
-                        textOrNull(r, "starttime")
-                );
-                LocalDateTime end = parseDateTime(
-                        textOrNull(r, "enddate"),
-                        textOrNull(r, "endtime")
-                );
+                // start/end
+                LocalDateTime start = parseDateTime(textOrNull(r, "startdate"), textOrNull(r, "starttime"));
+                LocalDateTime end = parseDateTime(textOrNull(r, "enddate"), textOrNull(r, "endtime"));
 
                 ev.setStartIso(start != null ? start.toString() : "");
                 ev.setEndIso(end != null ? end.toString() : "");
 
-                // columns är ofta en array av objekt; vi försöker plocka ut meningsfull text
-                List<String> colTexts = extractColumnTexts(r.path("columns"));
-                String title = buildTitle(colTexts);
+                // title
+                String title = (activity != null ? activity : "TimeEdit event");
+                if (place != null && !place.isBlank()) {
+                    title = title + " - " + place;
+                }
                 ev.setTitle(title);
 
-                // Fyll förslag men gör fälten redigerbara i UI
-                ev.setLocation(suggestLocation(colTexts));
-                ev.setDescription(suggestDescription(colTexts));
+                // location
+                ev.setLocation(place != null ? place : "");
+
+                // description (ren och användbar)
+                StringBuilder desc = new StringBuilder();
+                appendLabeledLine(desc, courseCode, courseName);              // "D0023E Forskningsmetoder..."
+                appendLabeledLine(desc, "Campus", campus);                   // "Campus: Luleå"
+                appendLabeledLine(desc, "Staff/Students", staffStudents);    // "Staff/Students: ..."
+                appendLabeledLine(desc, "Comment", comment);                 // "Comment: ..."
+                appendLabeledLine(desc, "Meeting link", meetingLink);        // "Meeting link: https://..."
+                ev.setDescription(desc.toString().trim());
 
                 result.add(ev);
             }
@@ -83,71 +106,57 @@ public class TimeEditParser {
         return (s == null || s.isBlank()) ? null : s;
     }
 
-    private static LocalDateTime parseDateTime(String yyyymmdd, String hhmm) {
-        if (yyyymmdd == null || hhmm == null) return null;
-        LocalDate d = LocalDate.parse(yyyymmdd, DATE_FMT);
-        LocalTime t = LocalTime.parse(hhmm, TIME_FMT);
+    private static LocalDateTime parseDateTime(String dateRaw, String timeRaw) {
+        if (dateRaw == null || timeRaw == null) return null;
+        LocalDate d = LocalDate.parse(dateRaw.trim(), DATE_FMT);
+        LocalTime t = LocalTime.parse(timeRaw.trim(), TIME_FMT);
         return LocalDateTime.of(d, t);
     }
 
-    private static List<String> extractColumnTexts(JsonNode columnsNode) {
+    private static Map<String, Integer> buildHeaderIndex(JsonNode headersNode) {
+        Map<String, Integer> map = new HashMap<>();
+        if (headersNode != null && headersNode.isArray()) {
+            for (int i = 0; i < headersNode.size(); i++) {
+                String h = headersNode.get(i).asText();
+                if (h != null && !h.isBlank()) {
+                    map.put(h.trim(), i);
+                }
+            }
+        }
+        return map;
+    }
+
+    private static List<String> extractColumnsAsList(JsonNode columnsNode) {
         List<String> out = new ArrayList<>();
         if (columnsNode == null || !columnsNode.isArray()) return out;
-
-        Iterator<JsonNode> it = columnsNode.elements();
-        while (it.hasNext()) {
-            JsonNode c = it.next();
-
-            // Vanliga fält: "text" eller "value"
-            String s = firstNonBlank(
-                    textOrNull(c, "text"),
-                    textOrNull(c, "value")
-            );
-
-            // Ibland kan column vara en ren sträng
-            if (s == null && c.isTextual()) {
-                s = c.asText();
-            }
-
-            if (s != null && !s.isBlank()) {
-                out.add(s.trim());
-            }
+        for (int i = 0; i < columnsNode.size(); i++) {
+            JsonNode c = columnsNode.get(i);
+            out.add(c == null || c.isNull() ? "" : c.asText(""));
         }
         return out;
     }
 
-    private static String buildTitle(List<String> colTexts) {
-        // Heuristik: ta 1–2 första "rimliga" texterna
-        List<String> cleaned = colTexts.stream()
-                .filter(s -> s.length() >= 2)
-                .toList();
-
-        if (cleaned.isEmpty()) return "TimeEdit event";
-        if (cleaned.size() == 1) return cleaned.get(0);
-        return cleaned.get(0) + " - " + cleaned.get(1);
+    private static String getCol(List<String> cols, Map<String, Integer> headerIndex, String header) {
+        Integer idx = headerIndex.get(header);
+        if (idx == null) return null;
+        if (idx < 0 || idx >= cols.size()) return null;
+        String v = cols.get(idx);
+        return (v == null || v.isBlank()) ? null : v.trim();
     }
 
-    private static String suggestLocation(List<String> colTexts) {
-        // Enkel heuristik: leta efter något som ser ut som lokal/rum/Zoom
-        for (String s : colTexts) {
-            String lower = s.toLowerCase();
-            if (lower.contains("zoom") || lower.contains("teams")) return s;
-            if (lower.matches(".*\\b[a-z]\\d{3,4}\\b.*")) return s; // typ A1301
+    private static void appendLine(StringBuilder sb, String value1, String value2) {
+        if ((value1 == null || value1.isBlank()) && (value2 == null || value2.isBlank())) return;
+        if (value1 != null && !value1.isBlank() && value2 != null && !value2.isBlank()) {
+            sb.append(value1).append(" ").append(value2).append("\n");
+        } else if (value1 != null && !value1.isBlank()) {
+            sb.append(value1).append("\n");
+        } else {
+            sb.append(value2).append("\n");
         }
-        return "";
     }
 
-    private static String suggestDescription(List<String> colTexts) {
-        // Spara övrig info i beskrivning som startförslag
-        if (colTexts.isEmpty()) return "";
-        return String.join("\n", colTexts);
-    }
-
-    private static String firstNonBlank(String... values) {
-        if (values == null) return null;
-        for (String v : values) {
-            if (v != null && !v.isBlank()) return v;
-        }
-        return null;
+    private static void appendLabeledLine(StringBuilder sb, String label, String value) {
+        if (value == null || value.isBlank()) return;
+        sb.append(label).append(": ").append(value).append("\n");
     }
 }
