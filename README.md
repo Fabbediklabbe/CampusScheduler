@@ -44,6 +44,12 @@ CANVAS_BASE_URL=https://canvas.se
 CANVAS_TOKEN=<ditt-canvas-token>
 ```
 
+**Alternativt skap temporära variabler i terminalen med:**
+```bash
+$env:CANVAS_BASE_URL="https://canvas.ltu.se"
+$env:CANVAS_TOKEN="DITT_TOKEN_HÄR"
+```
+
 ## Starta applikationen
 
 ```bash
