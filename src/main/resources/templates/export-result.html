@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Export result</title>
+    </head>
+    <body>
+    <h1>Canvas export result</h1>
+
+        <p>
+            Context code:
+            <strong th:text="${contextCode}">context</strong>
+        </p>
+
+        <div th:if="${errorMessage != null}">
+            <p th:text="${errorMessage}"></p>
+        </div>
+
+        <table border="1" cellpadding="6" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Status</th>
+                    <th>Canvas id</th>
+                    <th>Error</th>
+                </tr>
+            </thead>
+        <tbody>
+            <tr th:each="r : ${results}">
+                <td th:text="${r.title}">title</td>
+                <td th:text="${r.startIso}">start</td>
+                <td th:text="${r.endIso}">end</td>
+                <td th:text="${r.success} ? 'OK' : 'FAIL'">status</td>
+                <td th:text="${r.canvasEventId}">id</td>
+                <td th:text="${r.error}">error</td>
+            </tr>
+        </tbody>
+    </table>
+
+        <p style="margin-top: 16px;">
+            <a th:href="@{/}">Back</a>
+        </p>
+    </body>
+</html>

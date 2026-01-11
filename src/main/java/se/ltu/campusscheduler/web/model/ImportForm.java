@@ -4,6 +4,16 @@ import jakarta.validation.constraints.NotBlank;
 
 public class ImportForm {
 
+    private boolean includeHolidays;
+
+    public boolean isIncludeHolidays() {
+        return includeHolidays;
+    }
+
+    public void setIncludeHolidays(boolean includeHolidays) {
+        this.includeHolidays = includeHolidays;
+    }
+
     @NotBlank(message = "TimeEdit-länk måste anges")
     private String timeEditUrl;
 

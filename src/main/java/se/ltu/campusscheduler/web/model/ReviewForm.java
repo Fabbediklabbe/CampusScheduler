@@ -7,6 +7,7 @@ public class ReviewForm {
 
     private String contextCode;
     private List<ScheduleEventForm> events = new ArrayList<>();
+    private boolean exportToMyCalendar;
 
     public String getContextCode() {
         return contextCode;
@@ -22,5 +23,13 @@ public class ReviewForm {
 
     public void setEvents(List<ScheduleEventForm> events) {
         this.events = events;
+    }
+
+    public boolean isExportToMyCalendar() {
+        return exportToMyCalendar;
+    }
+
+    public void setExportToMyCalendar(boolean exportToMyCalendar) {
+        this.exportToMyCalendar = exportToMyCalendar;
     }
 }

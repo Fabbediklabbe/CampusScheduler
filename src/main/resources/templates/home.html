@@ -1,27 +1,38 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8" />
-  <title>CampusScheduler</title>
-</head>
-<body>
-  <h1>Import TimeEdit schedule</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <title>CampusScheduler</title>
+  </head>
+  <body>
+    <h1>Import TimeEdit schedule</h1>
 
-  <form th:action="@{/import}" th:object="${importForm}" method="post">
-    <div>
-      <label>TimeEdit URL</label><br/>
-      <input type="text" th:field="*{timeEditUrl}" size="100" />
-      <div th:if="${#fields.hasErrors('timeEditUrl')}" th:errors="*{timeEditUrl}"></div>
+    <div th:if="${importError != null}" style="margin:12px 0; padding:10px; border:1px solid #cc0000;">
+      <p th:text="${importError}">Import error</p>
     </div>
 
-    <div style="margin-top: 12px;">
-      <label>Canvas context code (optional for now)</label><br/>
-      <input type="text" th:field="*{contextCode}" size="40" placeholder="course_12345" />
-    </div>
+    <form th:action="@{/import}" th:object="${importForm}" method="post">
+      <div>
+        <label>TimeEdit URL</label><br/>
+        <input type="text" th:field="*{timeEditUrl}" size="100" />
+        <div th:if="${#fields.hasErrors('timeEditUrl')}" th:errors="*{timeEditUrl}"></div>
+      </div>
 
-    <div style="margin-top: 12px;">
-      <button type="submit">Import</button>
-    </div>
-  </form>
-</body>
+      <div style="margin-top: 12px;">
+        <label>Canvas context code (optional for now)</label><br/>
+        <input type="text" th:field="*{contextCode}" size="40" placeholder="course_12345" />
+      </div>
+
+      <div style="margin-top: 12px;">
+        <label>
+          <input type="checkbox" th:field="*{includeHolidays}" />
+          Include holidays (röda dagar)
+        </label>
+      </div>
+
+      <div style="margin-top: 12px;">
+        <button type="submit">Import</button>
+      </div>
+    </form>
+  </body>
 </html>

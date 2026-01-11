@@ -27,7 +27,7 @@ public class TimeEditParser {
         this.objectMapper = objectMapper;
     }
 
-    public List<ScheduleEventForm> parseReservations(String rawJson) {
+    public List<ScheduleEventForm> parseReservations(String rawJson, boolean includeHolidays) {
         try {
             JsonNode root = objectMapper.readTree(rawJson);
 
@@ -55,9 +55,10 @@ public class TimeEditParser {
                 boolean isProbablyHoliday = (courseCode == null || courseCode.isBlank())
                         && (place == null || place.isBlank())
                         && (activity != null && !activity.isBlank());
-                if (isProbablyHoliday) {
+                if (!includeHolidays && isProbablyHoliday) {
                     continue;
                 }
+
 
                 ScheduleEventForm ev = new ScheduleEventForm();
 
@@ -69,8 +70,9 @@ public class TimeEditParser {
                 LocalDateTime start = parseDateTime(textOrNull(r, "startdate"), textOrNull(r, "starttime"));
                 LocalDateTime end = parseDateTime(textOrNull(r, "enddate"), textOrNull(r, "endtime"));
 
-                ev.setStartIso(start != null ? start.format(DATE_FMT) + "\n" + start.format(TIME_FMT) : "");
-                ev.setEndIso(end != null ? end.format(DATE_FMT) + "\n" + end.format(TIME_FMT) : "");
+                ev.setStartIso(start != null ? start.toString() : "");
+                ev.setEndIso(end != null ? end.toString() : "");
+
 
                 // title
                 String title = (activity != null ? activity : "TimeEdit event");
