@@ -5,7 +5,6 @@ public class ScheduleEventForm {
     private String sourceId;
     private String title;
 
-    // Vi håller dessa som ISO-strängar i detta steg för enkel binding i Thymeleaf.
     private String startIso;
     private String endIso;
 

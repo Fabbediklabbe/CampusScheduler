@@ -9,7 +9,6 @@ public class TimeEditUrlNormalizer {
         if (input == null) return null;
         String url = input.trim();
 
-        // Vanligt: .../schedule.html?...
         if (url.contains(".html")) {
             return url.replace(".html", ".json");
         }
