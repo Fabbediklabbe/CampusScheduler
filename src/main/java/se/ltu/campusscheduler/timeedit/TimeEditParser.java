@@ -51,7 +51,7 @@ public class TimeEditParser {
                 String meetingLink = getCol(cols, headerIndex, "Möteslänk");
                 String campus = getCol(cols, headerIndex, "Campus");
 
-                // Filtrera bort helgdagar/icke-kurs-händelser (som i din JSON)
+                // Filtrera bort helgdagar/icke-kurs-händelser
                 boolean isProbablyHoliday = (courseCode == null || courseCode.isBlank())
                         && (place == null || place.isBlank())
                         && (activity != null && !activity.isBlank());
@@ -84,7 +84,7 @@ public class TimeEditParser {
                 // location
                 ev.setLocation(place != null ? place : "");
 
-                // description (ren och användbar)
+                // description
                 StringBuilder desc = new StringBuilder();
                 appendLabeledLine(desc, courseCode, courseName);              // "D0023E Forskningsmetoder..."
                 appendLabeledLine(desc, "Campus", campus);                   // "Campus: Luleå"

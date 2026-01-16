@@ -17,7 +17,6 @@ public class ImportForm {
     @NotBlank(message = "TimeEdit-länk måste anges")
     private String timeEditUrl;
 
-    // valfritt i detta steg, men vi tar med det direkt för kommande Canvas-export
     private String contextCode;
 
     public String getTimeEditUrl() {

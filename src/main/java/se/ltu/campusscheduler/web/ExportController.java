@@ -11,7 +11,6 @@ import se.ltu.campusscheduler.web.model.ReviewForm;
 import se.ltu.campusscheduler.web.model.ScheduleEventForm;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -101,7 +100,7 @@ public class ExportController {
         String s = raw.trim();
         if (s.isBlank()) return "";
 
-        // Om användaren skriver bara siffror -> anta course_<id>
+        // Om användaren skriver bara siffror, anta course_<id>
         if (s.matches("\\d+")) {
             return "course_" + s;
         }
